@@ -1,15 +1,18 @@
 \documentclass[11pt]{article}
+
+\usepackage[hyphens]{url}
+\usepackage[pdftex,bookmarksnumbered,hidelinks,breaklinks]{hyperref}
 \usepackage{amssymb}
 \usepackage{amsmath}
 \usepackage{amsrefs}
 \usepackage{graphicx}
 \usepackage{bookman}
-\usepackage{url}
 \usepackage{amsthm}
 \usepackage{verbatim}
 \usepackage{xcolor}
 \usepackage{setspace}
 \usepackage{float}
+\usepackage{url}
 \usepackage[margin=1in]{geometry}
 \bibliographystyle{amsmath}
 \newtheorem{definition}{Definition}
@@ -33,12 +36,11 @@ and facial recognition techniques.
 
 \section{Motivation}
 This project provides a complex challenge for machine learning. The program
-must be able to learn how to identify a whale in a photograph. It also must learn
-how to differentiate between multiple whales. The program must be precise enough
-to differentiate between different whales. It must also be efficient, due to the
+must be able to learn how to identify a whale in a photograph. The program must
+be precise enough to differentiate between different whales. It must also be efficient, due to the
 size of the photographic data set. The hypothesis space for photographs is also
-much less obvious than a standard text data set. Therefore, the data has real-world performance
-constraints. In addition, the data is provided by the National Oceanic and 
+much less obvious than a standard text data set. Therefore, the data set introduces real-world performance
+constraints. In addition, the data set is provided by the National Oceanic and 
 Atmospheric Administration (NOAA) and the New England Aquarium (NEA), so this is a real-world problem that will 
 prove to be sufficiently challenging\cite{kaggle_desc}\cite{NOAA}\cite{NEA}.
  
@@ -48,7 +50,7 @@ prove to be sufficiently challenging\cite{kaggle_desc}\cite{NOAA}\cite{NEA}.
 \subsection{Data Set}
 The project host has provided a data set\cite{kaggle_data}. The data set includes 
 $11469$ photos. There is also a set of training data, with $4544$ training examples.
-This data is sufficent for training and testing machine learning algorithms. 
+This data set is sufficent for training and testing machine learning algorithms. 
 
 \subsection{Facial Recognition}
 For this competition, MathWorks is providing their MatLab software, including
