@@ -1,0 +1,12 @@
+detector = vision.CascadeObjectDetector('../data/detector.xml');
+disp('Detector');
+img = imread('../data/imgs/w_0.jpg');
+disp('imread');
+bbox = step(detector, img);
+disp('bbox');
+detectedImg = insertObjectAnnotation(img,'rectangle',bbox,'whale');
+disp('detectedImg');
+figure;
+disp('Figure');
+imshow(detectedImg);
+disp('Done.');
