@@ -87,10 +87,12 @@ public class Main
 
         //log();
 
-        WhaleImageNeuralNetwork ann = new WhaleImageNeuralNetwork(whaleIds.size());
+        WhaleImageNeuralNetwork ann = new WhaleImageNeuralNetwork(whaleIds.size(),
+                                                                  whaleIds.toArray(new Integer[whaleIds.size()]));
         for (int i = 0; i < TRAINING_ITERATIONS; i++)
         {
             ann.runEpoch(testData);
+            System.err.println("Epoch " + i + " complete.");
         }
         System.err.println("Done");
     }

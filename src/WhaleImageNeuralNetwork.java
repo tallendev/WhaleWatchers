@@ -2,8 +2,7 @@ import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.*;
 
 /**
  * Neural network abstraction for identifying right whales.
@@ -28,11 +27,13 @@ public class WhaleImageNeuralNetwork
     private Perceptron[] input;
     private Perceptron[] output;
     private ArrayList<Perceptron[]> hidden;
+    private HashMap<Integer, Perceptron> outputMap;
 
-    public WhaleImageNeuralNetwork (int output_size)
+    public WhaleImageNeuralNetwork (int output_size, Integer[] ids)
     {
         input = new Perceptron[INPUTS];
         output = new Perceptron[output_size];
+        outputMap = new HashMap<>();
         hidden = new ArrayList<>();
         hidden.add(new Perceptron[(INPUTS + output.length) / 2]);
 
@@ -44,6 +45,7 @@ public class WhaleImageNeuralNetwork
         for (int i = 0; i < output.length; i++)
         {
             output[i] = new Perceptron();
+            outputMap.put(ids[i], output[i]);
         }
         // Assuming fixed hidden length for now...
         Perceptron[] mHidden = hidden.get(0);
@@ -84,8 +86,10 @@ public class WhaleImageNeuralNetwork
 
     public void runEpoch(java.util.List<WhaleImage> training)
     {
+        int counter = 0;
         for (WhaleImage anInput : training)
         {
+            System.err.println("Starting image #" + counter++);
             BufferedImage image;
             int[] colorBuffer;
             try
@@ -110,23 +114,73 @@ public class WhaleImageNeuralNetwork
             {
                 p.activate();
             }
-            for (Perceptron p : hidden.get(0))
+
+            double[] hidden_out = new double[hidden.get(0).length];
+            for (int i = 0; i < hidden.get(0).length; i++)
             {
-                p.activate();
+                Perceptron p = hidden.get(0)[i];
+                hidden_out[i] = p.activate();
             }
-            // Stores all output node results. Not necessary for decision, but good for stats.
+            // Stores all output node results for backprop.
             double[] out = new double[output.length];
+            double[] outErr = new double[output.length];
             for (int i = 0; i < out.length; i++)
             {
-                out[i] = output[i].activate();
+                double o_k = output[i].activate();
+                if (outputMap.get(anInput.getWhaleId()) == output[i])
+                {
+                    outErr[i] = o_k * (1 - o_k) * (.9 - o_k);
+                }
+                else
+                {
+                    outErr[i] = o_k * (1 - o_k) * (.1 - o_k);
+                }
             }
-            
+
+            // backprop for hidden...
+            double[] hiddenErr = new double[hidden.get(0).length];
+            for (int i = 0; i < hidden.get(0).length; i++)
+            {
+                Perceptron p = hidden.get(0)[i];
+                double o_h = hidden_out[i];
+                double wSum = 0;
+                for (int j = 0; j < p.connections.size(); j++)
+                {
+                    wSum += hiddenErr[j] * p.connections.get(j).getWeight(p);
+                }
+                hidden_out[i] = o_h * (1 - o_h) * wSum;
+            }
+
+            // Apply weight change.
+            for (int i = 0; i < output.length; i++)
+            {
+                double temp = N * outErr[i];
+                for (Perceptron p : output[i].weights.keySet())
+                {
+                    double cw = output[i].weights.get(p);
+                    double dw = temp * output[i].in.get(p);
+                    output[i].weights.put(p, cw + dw);
+                }
+            }
+
+            for (int i = 0; i < hidden.get(0).length; i++)
+            {
+                double temp = N * hiddenErr[i];
+                Perceptron current = hidden.get(0)[i];
+                for (Perceptron p : current.weights.keySet())
+                {
+                    double cw = current.weights.get(p);
+                    double dw = temp * current.in.get(p);
+                    current.weights.put(p, cw + dw);
+                }
+            }
         }
     }
 
     public class Perceptron
     {
         protected HashMap<Perceptron, Double> weights;
+        protected HashMap<Perceptron, Double> in;
         protected ArrayList<Perceptron> connections;
 
         // Collect weighted input
@@ -135,8 +189,14 @@ public class WhaleImageNeuralNetwork
         public Perceptron ()
         {
             weights = new HashMap<>();
+            in = new HashMap<>();
             connections = new ArrayList<>();
             sum = 0;
+        }
+
+        public double getWeight(Perceptron p)
+        {
+            return weights.get(p);
         }
 
         public void addConnection (Perceptron p)
@@ -161,6 +221,7 @@ public class WhaleImageNeuralNetwork
          */
         private void receive (Perceptron p, double val)
         {
+            in.put(p, val);
             sum += val * weights.get(p);
         }
 
@@ -197,20 +258,10 @@ public class WhaleImageNeuralNetwork
 
         protected void randWeights ()
         {
-            double sum = 0;
-            double rand;
-            // random weight
             for (Perceptron p : weights.keySet())
             {
-                rand = Math.random();
-                sum += rand;
-                weights.put(p, rand);
-            }
-            double avg = sum / weights.size();
-            // normalize weights
-            for (Perceptron p : weights.keySet())
-            {
-                weights.put(p, weights.get(p) / avg);
+                // Random weights between -.05 and .05
+                weights.put(p, (Math.random() * .10) - .05);
             }
         }
     }
