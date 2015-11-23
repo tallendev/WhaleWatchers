@@ -1,0 +1,5 @@
+\beamer@endinputifotherversion {3.36pt}
+\beamer@sectionintoc {1}{Recognition}{5}{0}{1}
+\beamer@subsectionintoc {1}{1}{Recognition}{5}{0}{1}
+\beamer@sectionintoc {2}{Identification}{12}{0}{2}
+\beamer@subsectionintoc {2}{1}{Identification}{12}{0}{2}

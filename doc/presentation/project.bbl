@@ -1,0 +1,46 @@
+% \bib, bibdiv, biblist are defined by the amsrefs package.
+\begin{bibdiv}
+\begin{biblist}
+
+\bib{kaggle_face}{misc}{
+       title={Creating a "face detector" for whales},
+  note={\url{http://www.kaggle.com/c/noaa-right-whale-recognition/details/creating-a-face-detector-for-whales},
+  Accessed: 2015-09-15},
+}
+
+\bib{kaggle_desc}{misc}{
+       title={Identify endangered right whales in aerial photographs},
+        note={\url{http://www.kaggle.com/c/noaa-right-whale-recognition},
+  Accessed: 2015-09-15},
+}
+
+\bib{math_training}{misc}{
+       title={Labeling images for classification model training},
+        note={\url{Label Images for Classification Model Training}, Accessed:
+  2015-09-15},
+}
+
+\bib{NEA}{misc}{
+       title={New england aquarium},
+        note={\url{www.neaq.org/index.php}, Accessed: 2015-09-15},
+}
+
+\bib{NOAA}{misc}{
+       title={Noaa fisheres},
+        note={\url{www.nmfs.noaa.gov}, Accessed: 2015-09-15},
+}
+
+\bib{kaggle_data}{misc}{
+       title={Right whale recognition data},
+        note={\url{http://www.kaggle.com/c/noaa-right-whale-recognition/data},
+  Accessed: 2015-09-15},
+}
+
+\bib{math_cascade}{misc}{
+       title={Train a cascade object detector},
+  note={\url{www.mathworks.com/help/vision/ug/train-a-cascade-object-detector.html},
+  Accessed: 2015-09-15},
+}
+
+\end{biblist}
+\end{bibdiv}
