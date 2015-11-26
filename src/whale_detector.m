@@ -1,6 +1,6 @@
 detector = vision.CascadeObjectDetector('../data/detector.xml');
 disp('Detector');
-img = imread('../data/raw/w_501.jpg');
+img = imread('../data/raw/w_10.jpg');
 disp('imread');
 bbox = step(detector, img);
 disp('bbox');

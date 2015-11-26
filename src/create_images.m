@@ -12,7 +12,7 @@ for i=1:images.Count
         detectedImg = imresize(detectedImg, [30, 32]);
     
         info = images.ImageLocation(i)
-        [pathstr, name, ext] = fileparts(positiveInstances(i).imageFilename);
+        [pathstr, name, ext] = fileparts(info{1});
         imwrite(detectedImg, strcat(strcat('../data/imgs/', name), ext))
 
     end

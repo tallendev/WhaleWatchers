@@ -1,6 +1,9 @@
 import org.apache.commons.io.FileUtils;
+import org.canova.api.records.reader.RecordReader;
+import org.canova.api.split.FileSplit;
+import org.canova.image.recordreader.ImageRecordReader;
+import org.deeplearning4j.datasets.canova.RecordReaderDataSetIterator;
 import org.deeplearning4j.datasets.iterator.DataSetIterator;
-import org.deeplearning4j.datasets.iterator.impl.IrisDataSetIterator;
 import org.deeplearning4j.eval.Evaluation;
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
@@ -24,36 +27,46 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
 
 
-/**
- * Created by agibsonccc on 9/12/14.
- *
- */
 public class WhaleDBN
 {
 
-    private static Logger log = LoggerFactory.getLogger(DBNIrisExample.class);
+    private static Logger log = LoggerFactory.getLogger(WhaleDBN.class);
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) throws Exception
+    {
         // Customizing params
         Nd4j.MAX_SLICES_TO_PRINT = -1;
         Nd4j.MAX_ELEMENTS_PER_SLICE = -1;
 
         final int numRows = 4;
         final int numColumns = 1;
-        int outputNum = 3;
-        int numSamples = 150;
+        int outputNum = 2649;
         int batchSize = 150;
         int iterations = 5;
         int splitTrainNum = (int) (batchSize * .8);
         int seed = 123;
         int listenerFreq = 1;
 
+        // Set path to the labeled images
+        String labeledPath = "data/train/";
+        List<String> labels = new ArrayList<>();
+        File[] dir = new File(labeledPath).listFiles();
+        for (File f : dir)
+        {
+            labels.add(f.getName());
+        }
+
         log.info("Load data....");
-        DataSetIterator iter = new IrisDataSetIterator(batchSize, numSamples);
+        RecordReader recordReader = new ImageRecordReader(32, 30, true, labels);
+        recordReader.initialize(new FileSplit(new File(labeledPath)));
+        DataSetIterator iter = new RecordReaderDataSetIterator(recordReader, 960, labels.size());
+
         DataSet next = iter.next();
         next.normalizeZeroMeanZeroUnitVariance();
 
