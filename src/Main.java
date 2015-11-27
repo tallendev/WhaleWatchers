@@ -1,6 +1,4 @@
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FilenameFilter;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.TreeSet;
@@ -23,6 +21,10 @@ public class Main
     /** No data found. */
     public static final int NDF = 200;
 
+
+    public static final String OUT_FILE = "data/results.csv";
+    public static final String LEARNING_FILE = "data/learning.dat";
+
     /** Directory of image files. */
     public static final File DATA_DIR = new File("data/imgs");
     /** Directory of training data. */
@@ -35,8 +37,12 @@ public class Main
 
     public static void main(String[] args)
     {
+        WhaleImageNeuralNetwork ann = null;
+        File learningFile = new File(LEARNING_FILE);
+
         System.err.println("Data dir: " + DATA_DIR);
-        File[] images = DATA_DIR.listFiles(new FilenameFilter() {
+        File[] images = DATA_DIR.listFiles(new FilenameFilter()
+        {
             @Override
             public boolean accept (File dir, String name)
             {
@@ -53,48 +59,111 @@ public class Main
             testData.add(new WhaleImage(file));
         }
 
-        TreeSet<Integer> whaleIds = new TreeSet<>();
-        try (Scanner in = new Scanner(TRAIN_FILE))
+        if (!learningFile.exists())
         {
-            String line = null;
-            if (in.hasNextLine())
+            System.err.println("Learning file not found. Starting training process.");
+
+            TreeSet<Integer> whaleIds = new TreeSet<>();
+            try (Scanner in = new Scanner(TRAIN_FILE))
             {
-                // Skip header.
-                in.nextLine();
+                String line = null;
+                if (in.hasNextLine())
+                {
+                    // Skip header.
+                    in.nextLine();
+                }
+                else
+                {
+                    error("Training file empty.", NDF);
+                }
+                while (in.hasNextLine())
+                {
+                    line = in.nextLine();
+                    String[] tokens = line.split(",");
+                    // tokens[0] = path, tokens[1] = whale id
+                    WhaleImage img = new WhaleImage(new File(TRAIN_DIR, tokens[0]), tokens[1]);
+                    trainData.add(img);
+                    whaleIds.add(img.getWhaleId());
+                }
+                if (trainData.size() == 0)
+                {
+                    error("No training data in file.", NDF);
+                }
             }
-            else
+            catch (FileNotFoundException fnf)
             {
-                error("Training file empty.", NDF);
+                error("Training file not found.", FNF);
             }
-            while (in.hasNextLine())
-            {
-                line = in.nextLine();
-                String[] tokens = line.split(",");
-                // tokens[0] = path, tokens[1] = whale id
-                WhaleImage img = new WhaleImage(new File(TRAIN_DIR, tokens[0]), tokens[1]);
-                trainData.add(img);
-                whaleIds.add(img.getWhaleId());
-            }
-            if (trainData.size() == 0)
-            {
-                error("No training data in file.", NDF);
-            }
+
+            //log();
+            ann = new WhaleImageNeuralNetwork(whaleIds.size(), whaleIds.toArray(new Integer[whaleIds.size()]));
+            System.err.println(ann.toString());
+            doTraining(ann);
         }
-        catch (FileNotFoundException fnf)
+        else
         {
-            error("Training file not found.", FNF);
+            ann = loadTraining();
+            System.err.println(ann.toString());
         }
 
-        //log();
+        try(FileOutputStream out = new FileOutputStream(OUT_FILE))
+        {
+            ann.runData(testData, out);
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+            System.err.println("Error writing results...");
+            System.exit(1);
+        }
+    }
 
-        WhaleImageNeuralNetwork ann = new WhaleImageNeuralNetwork(whaleIds.size(),
-                                                                  whaleIds.toArray(new Integer[whaleIds.size()]));
+    private static WhaleImageNeuralNetwork loadTraining()
+    {
+        System.err.println("Loading training data from file.");
+        WhaleImageNeuralNetwork ann = null;
+        try (FileInputStream f = new FileInputStream(LEARNING_FILE);
+             ObjectInputStream in = new ObjectInputStream(f))
+        {
+            ann = (WhaleImageNeuralNetwork) in.readObject();
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+            System.err.println("Error loading training file.");
+            System.exit(1);
+        }
+        catch (ClassNotFoundException e)
+        {
+            e.printStackTrace();
+            System.err.println("Class not found, something went horribly wrong...");
+        }
+        return ann;
+    }
+
+    private static void doTraining(WhaleImageNeuralNetwork ann)
+    {
         for (int i = 0; i < TRAINING_ITERATIONS; i++)
         {
-            ann.runEpoch(testData);
+            ann.runEpoch(trainData);
             System.err.println("Epoch " + i + " complete.");
         }
-        System.err.println("Done");
+        System.err.println("Done training");
+        try (FileOutputStream f = new FileOutputStream(LEARNING_FILE);
+             ObjectOutputStream out = new ObjectOutputStream(f))
+        {
+            out.writeObject(ann);
+        }
+        catch (FileNotFoundException e)
+        {
+            e.printStackTrace();
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+            System.err.println("IO exception while writing output.");
+        }
+        System.err.println(ann.toString());
     }
 
     private static void error(String msg, int err)

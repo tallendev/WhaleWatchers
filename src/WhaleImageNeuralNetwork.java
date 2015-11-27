@@ -1,8 +1,14 @@
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.*;
+import java.io.PrintWriter;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Formatter;
+import java.util.HashMap;
+import java.util.Locale;
 
 /**
  * Neural network abstraction for identifying right whales.
@@ -11,7 +17,7 @@ import java.util.*;
  * @version 11/15/15
  * @created 11/15/15
  */
-public class WhaleImageNeuralNetwork
+public class WhaleImageNeuralNetwork implements Serializable
 {
     public static final int WIDTH = 32;
     public static final int HEIGHT = 30;
@@ -61,11 +67,11 @@ public class WhaleImageNeuralNetwork
                 connect(anInput1, aMHidden);
             }
         }
-        for (int i = 0; i < mHidden.length; i++)
+        for (Perceptron aMHidden : mHidden)
         {
-            for (int j = 0; j < output.length; j++)
+            for (Perceptron anOutput : output)
             {
-                connect(input[i], mHidden[j]);
+                connect(aMHidden, anOutput);
             }
         }
         /**
@@ -84,12 +90,84 @@ public class WhaleImageNeuralNetwork
         }
     }
 
+    public void runData(java.util.List<WhaleImage> data, FileOutputStream outFile)
+    {
+        PrintWriter outWriter = new PrintWriter(outFile);
+        StringBuilder str = new StringBuilder("Image,");
+        Formatter formatter = new Formatter(str, Locale.US);
+        for (int id : outputMap.keySet())
+        {
+            formatter.format("whale_%05d,", id);
+        }
+        str.deleteCharAt(str.length() - 1);
+        str.append("\n");
+
+        int counter = 0;
+        for (WhaleImage anInput : data)
+        {
+            System.err.println("Starting data image #" + counter++);
+            BufferedImage image;
+            int[] colorBuffer;
+            try
+            {
+                // get the BufferedImage, using the ImageIO class
+                image = ImageIO.read(anInput.getFile());
+            }
+            catch (IOException e)
+            {
+                System.err.println(e.getMessage());
+                continue;
+            }
+            colorBuffer = image.getRGB(0, 0, WIDTH, HEIGHT, null, 0, WIDTH);
+            Color color;
+            for (int i = 0; i < INPUTS; i++)
+            {
+                color = new Color(colorBuffer[i]);
+                int gray = (color.getRed() + color.getGreen() + color.getBlue()) / 3;
+                this.input[i].receiveInput(gray);
+            }
+            for (Perceptron p : input)
+            {
+                p.activate();
+            }
+
+            for (int i = 0; i < hidden.get(0).length; i++)
+            {
+                Perceptron p = hidden.get(0)[i];
+                p.activate();
+            }
+            // Stores all output node results for backprop.
+            int max = 0;
+            double[] out = new double[output.length];
+            for (int i = 0; i < out.length; i++)
+            {
+                double o_k = output[i].activate();
+                out[i] = o_k;
+                if (o_k > out[max])
+                {
+                    max = i;
+                }
+            }
+            str.append(anInput.getFile()).append(",");
+            for (int i = 0; i < out.length; i++)
+            {
+                int val = max == i ? 1 : 0;
+                formatter.format("%d,", val);
+            }
+            str.deleteCharAt(str.length() - 1);
+            str.append("\n");
+            System.err.println("File# " + counter);
+        }
+        outWriter.println(str.toString());
+        outWriter.close();
+    }
+
     public void runEpoch(java.util.List<WhaleImage> training)
     {
         int counter = 0;
         for (WhaleImage anInput : training)
         {
-            System.err.println("Starting image #" + counter++);
+            System.err.println("Starting training image #" + counter++);
             BufferedImage image;
             int[] colorBuffer;
             try
@@ -146,9 +224,9 @@ public class WhaleImageNeuralNetwork
                 double wSum = 0;
                 for (int j = 0; j < p.connections.size(); j++)
                 {
-                    wSum += hiddenErr[j] * p.connections.get(j).getWeight(p);
+                    wSum += outErr[j] * p.connections.get(j).getWeight(p);
                 }
-                hidden_out[i] = o_h * (1 - o_h) * wSum;
+                hiddenErr[i] = o_h * (1 - o_h) * wSum;
             }
 
             // Apply weight change.
@@ -177,7 +255,7 @@ public class WhaleImageNeuralNetwork
         }
     }
 
-    public class Perceptron
+    public class Perceptron implements Serializable
     {
         protected HashMap<Perceptron, Double> weights;
         protected HashMap<Perceptron, Double> in;
@@ -264,11 +342,40 @@ public class WhaleImageNeuralNetwork
                 weights.put(p, (Math.random() * .10) - .05);
             }
         }
+
+        public String toString()
+        {
+            String str = "";
+            for (Perceptron key : weights.keySet())
+            {
+                str += weights.get(key) + ", ";
+            }
+            str = str.substring(0, str.length() - 2);
+            return str;
+        }
     }
 
     private static void connect(Perceptron a, Perceptron b)
     {
         b.addWeight(a);
         a.addConnection(b);
+    }
+
+    public String toString()
+    {
+        String str = "Output Layer: ";
+        for (Perceptron p : output)
+        {
+            //System.err.println("Output weights#: " + p.weights.size());
+            str += "[" + p.toString() + "], ";
+        }
+        str = str.substring(str.length() - 2);
+        str += "Hidden Layer: ";
+        for (Perceptron p : hidden.get(0))
+        {
+            str += "[" + p.toString() + "], ";
+        }
+        str = str.substring(str.length() - 2);
+        return str;
     }
 }
