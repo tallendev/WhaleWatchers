@@ -164,8 +164,19 @@ public class WhaleImageNeuralNetwork implements Serializable
 
     public void runEpoch(java.util.List<WhaleImage> training)
     {
-        double[] hiddenErr = new double[hidden.get(0).length];
-        double[] outErr = new double[output.length];
+        double[][] odws = new double[output.length][];
+        for (int i = 0; i < output.length; i++)
+        {
+            odws[i] = new double[output[i].weights.keySet().size()];
+        }
+
+        double[][] hdws = new double[hidden.get(0).length][];
+        for (int i = 0; i < hidden.get(0).length; i++)
+        {
+            Perceptron current = hidden.get(0)[i];
+            hdws[i] = new double[current.weights.keySet().size()];
+        }
+
         int counter = 0;
         for (WhaleImage anInput : training)
         {
@@ -205,18 +216,14 @@ public class WhaleImageNeuralNetwork implements Serializable
             }
             // Stores all output node results for backprop.
             double[] out = new double[output.length];
+            double[] hiddenErr = new double[hidden.get(0).length];
+            double[] outErr = new double[output.length];
             for (int i = 0; i < out.length; i++)
             {
                 double o_k = output[i].activate();
                 out[i] = o_k;
-                if (outputMap.get(anInput.getWhaleId()) == output[i])
-                {
-                    outErr[i] += o_k * (1 - o_k) * (.9 - o_k);
-                }
-                else
-                {
-                    outErr[i] += o_k * (1 - o_k) * (.1 - o_k);
-                }
+                double val = outputMap.get(anInput.getWhaleId()) == output[i] ? .9 : .1;
+                outErr[i] = o_k * (1 - o_k) * (val - o_k);
             }
 
             // backprop for hidden...
@@ -231,28 +238,55 @@ public class WhaleImageNeuralNetwork implements Serializable
                 }
                 hiddenErr[i] += o_h * (1 - o_h) * wSum;
             }
+
+            // Apply weight change.
+            for (int i = 0; i < output.length; i++)
+            {
+                double temp = N * outErr[i];
+                int j = 0;
+                for (Perceptron p : output[i].weights.keySet())
+                {
+                    double dw = temp * output[i].in.get(p);
+                    odws[i][j] += dw;
+                    j++;
+                }
+            }
+
+            for (int i = 0; i < hidden.get(0).length; i++)
+            {
+                double temp = N * hiddenErr[i];
+                Perceptron current = hidden.get(0)[i];
+                int j = 0;
+                for (Perceptron p : current.weights.keySet())
+                {
+                    double dw = temp * current.in.get(p);
+                    hdws[i][j] += dw;
+                    j++;
+                }
+            }
         }
+
         // Apply weight change.
         for (int i = 0; i < output.length; i++)
         {
-            double temp = N * outErr[i];
+            int j = 0;
             for (Perceptron p : output[i].weights.keySet())
             {
                 double cw = output[i].weights.get(p);
-                double dw = temp * output[i].in.get(p);
-                output[i].weights.put(p, cw + dw);
+                output[i].weights.put(p, cw += odws[i][j]);
+                j++;
             }
         }
 
         for (int i = 0; i < hidden.get(0).length; i++)
         {
-            double temp = N * hiddenErr[i];
+            int j = 0;
             Perceptron current = hidden.get(0)[i];
             for (Perceptron p : current.weights.keySet())
             {
                 double cw = current.weights.get(p);
-                double dw = temp * current.in.get(p);
-                current.weights.put(p, cw + dw);
+                current.weights.put(p, cw + hdws[i][j]);
+                j++;
             }
         }
     }
