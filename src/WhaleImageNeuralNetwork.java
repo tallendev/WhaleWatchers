@@ -123,7 +123,7 @@ public class WhaleImageNeuralNetwork implements Serializable
             for (int i = 0; i < INPUTS; i++)
             {
                 color = new Color(colorBuffer[i]);
-                int gray = (color.getRed() + color.getGreen() + color.getBlue()) / 3;
+                int gray = (((color.getRed() + color.getGreen() + color.getBlue()) / 3) / 255) * 2 - 1;
                 this.input[i].receiveInput(gray);
             }
             for (Perceptron p : input)
@@ -200,7 +200,8 @@ public class WhaleImageNeuralNetwork implements Serializable
             for (int i = 0; i < INPUTS; i++)
             {
                 color = new Color(colorBuffer[i]);
-                int gray = (color.getRed() + color.getGreen() + color.getBlue()) / 3;
+                // derive gray and normalize...
+                int gray = (((color.getRed() + color.getGreen() + color.getBlue()) / 3) / 255) * 2 - 1;
                 this.input[i].receiveInput(gray);
             }
             for (Perceptron p : input)
@@ -273,7 +274,7 @@ public class WhaleImageNeuralNetwork implements Serializable
             for (Perceptron p : output[i].weights.keySet())
             {
                 double cw = output[i].weights.get(p);
-                output[i].weights.put(p, cw += odws[i][j]);
+                output[i].weights.put(p, cw + odws[i][j]);
                 j++;
             }
         }
@@ -358,6 +359,7 @@ public class WhaleImageNeuralNetwork implements Serializable
             feedforward(val);
 
             sum = 0;
+            //assert (val < 1 && val > -1) : ("Val: " + val);
             return val;
         }
 
