@@ -1,3 +1,4 @@
+import mpi.MPI;
 import mpi.MPIException;
 
 import java.io.*;
@@ -39,7 +40,7 @@ public class Main
 
     public static void main(String[] args) throws MPIException
     {
-
+        MPI.Init(args);
 
         WhaleImageNeuralNetwork ann = null;
         File learningFile = new File(LEARNING_FILE);
@@ -109,18 +110,21 @@ public class Main
         {
             ann = loadTraining();
             System.err.println(ann.toString());
+
+            try(FileOutputStream out = new FileOutputStream(OUT_FILE))
+            {
+                ann.runData(testData, out);
+            }
+            catch (IOException e)
+            {
+                e.printStackTrace();
+                System.err.println("Error writing results...");
+                System.exit(1);
+            }
         }
 
-        try(FileOutputStream out = new FileOutputStream(OUT_FILE))
-        {
-            ann.runData(testData, out);
-        }
-        catch (IOException e)
-        {
-            e.printStackTrace();
-            System.err.println("Error writing results...");
-            System.exit(1);
-        }
+        MPI.Finalize();
+
     }
 
     private static WhaleImageNeuralNetwork loadTraining()
@@ -146,30 +150,35 @@ public class Main
         return ann;
     }
 
-    private static void doTraining(WhaleImageNeuralNetwork ann)
+    private static void doTraining(WhaleImageNeuralNetwork ann) throws MPIException
     {
         for (int i = 0; i < TRAINING_ITERATIONS; i++)
         {
             System.err.println("Starting Epoch: " + i);
             ann.runEpoch(trainData);
             System.err.println(ann.toString());
+            MPI.COMM_WORLD.barrier();
         }
         System.err.println("Done training");
-        try (FileOutputStream f = new FileOutputStream(LEARNING_FILE);
-             ObjectOutputStream out = new ObjectOutputStream(f))
+
+        if (MPI.COMM_WORLD.getRank() == 0)
         {
-            out.writeObject(ann);
+            try (FileOutputStream f = new FileOutputStream(LEARNING_FILE);
+                 ObjectOutputStream out = new ObjectOutputStream(f))
+            {
+                out.writeObject(ann);
+            }
+            catch (FileNotFoundException e)
+            {
+                e.printStackTrace();
+            }
+            catch (IOException e)
+            {
+                e.printStackTrace();
+                System.err.println("IO exception while writing output.");
+            }
+            System.err.println(ann.toString());
         }
-        catch (FileNotFoundException e)
-        {
-            e.printStackTrace();
-        }
-        catch (IOException e)
-        {
-            e.printStackTrace();
-            System.err.println("IO exception while writing output.");
-        }
-        System.err.println(ann.toString());
     }
 
     private static void error(String msg, int err)
