@@ -1,5 +1,3 @@
-detector = vision.CascadeObjectDetector('../data/detector.xml');
-disp('Detector');
 display(numel(positiveInstances))
 
 for i=1:numel(positiveInstances)

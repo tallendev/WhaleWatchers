@@ -65,7 +65,7 @@ public class WhaleImage
     /**
      * Parses whale ID from string.
      */
-    protected int extractWhaleId(String whale)
+    protected static int extractWhaleId(String whale)
     {
         Scanner in = new Scanner(whale).useDelimiter("[^0-9]+");
         return in.nextInt();

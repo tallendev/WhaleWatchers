@@ -27,10 +27,7 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 
 public class WhaleDBN
@@ -38,8 +35,35 @@ public class WhaleDBN
 
     private static Logger log = LoggerFactory.getLogger(WhaleDBN.class);
 
+    /** No data found. */
+    public static final int NDF = 200;
+
+    /** CSV containing training data. */
+    public static final File TRAIN_FILE = new File("data/train.csv");
+
     public static void main(String[] args) throws Exception
     {
+        TreeSet<Integer> whaleIds = new TreeSet<>();
+        try (Scanner in = new Scanner(TRAIN_FILE))
+        {
+            String line = null;
+            if (in.hasNextLine())
+            {
+                // Skip header.
+                in.nextLine();
+            }
+            else
+            {
+                error("Training file empty.", NDF);
+            }
+            while (in.hasNextLine())
+            {
+                line = in.nextLine();
+                String[] tokens = line.split(",");
+                whaleIds.add(WhaleImage.extractWhaleId(tokens[1]));
+            }
+        }
+
         // Customizing params
         Nd4j.MAX_SLICES_TO_PRINT = -1;
         Nd4j.MAX_ELEMENTS_PER_SLICE = -1;
@@ -153,4 +177,11 @@ public class WhaleDBN
         System.out.println(savedNetwork.params());
 
     }
+
+    private static void error(String msg, int err)
+    {
+        System.err.print(msg);
+        System.exit(err);
+    }
+
 }

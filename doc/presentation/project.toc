@@ -2,4 +2,6 @@
 \beamer@sectionintoc {1}{Recognition}{5}{0}{1}
 \beamer@subsectionintoc {1}{1}{Recognition}{5}{0}{1}
 \beamer@sectionintoc {2}{Identification}{12}{0}{2}
-\beamer@subsectionintoc {2}{1}{Identification}{12}{0}{2}
+\beamer@subsectionintoc {2}{1}{Neural Network}{13}{0}{2}
+\beamer@subsectionintoc {2}{2}{Deep Belief Network}{18}{0}{2}
+\beamer@sectionintoc {3}{Conclusion}{22}{0}{3}

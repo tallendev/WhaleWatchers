@@ -14,7 +14,7 @@ import java.util.TreeSet;
 
 public class Main
 {
-    public static final int TRAINING_ITERATIONS = 1;
+    public static final int TRAINING_ITERATIONS = 500;
 
     /** File not found exception. */
     public static final int FNF = 100;
@@ -97,6 +97,7 @@ public class Main
 
             //log();
             ann = new WhaleImageNeuralNetwork(whaleIds.size(), whaleIds.toArray(new Integer[whaleIds.size()]));
+            System.err.println("Neural Network Initialized:");
             System.err.println(ann.toString());
             doTraining(ann);
         }
@@ -145,8 +146,9 @@ public class Main
     {
         for (int i = 0; i < TRAINING_ITERATIONS; i++)
         {
+            System.err.println("Starting Epoch: " + i);
             ann.runEpoch(trainData);
-            System.err.println("Epoch " + i + " complete.");
+            System.err.println(ann.toString());
         }
         System.err.println("Done training");
         try (FileOutputStream f = new FileOutputStream(LEARNING_FILE);

@@ -167,7 +167,7 @@ public class WhaleImageNeuralNetwork implements Serializable
         int counter = 0;
         for (WhaleImage anInput : training)
         {
-            System.err.println("Starting training image #" + counter++);
+            //System.err.println("Starting training image #" + counter++);
             BufferedImage image;
             int[] colorBuffer;
             try
@@ -178,6 +178,8 @@ public class WhaleImageNeuralNetwork implements Serializable
             catch (IOException e)
             {
                 System.err.println(e.getMessage());
+                System.err.println("File: " + anInput.getFile());
+                System.exit(100);
                 continue;
             }
             colorBuffer = image.getRGB(0, 0, WIDTH, HEIGHT, null, 0, WIDTH);
@@ -205,6 +207,7 @@ public class WhaleImageNeuralNetwork implements Serializable
             for (int i = 0; i < out.length; i++)
             {
                 double o_k = output[i].activate();
+                out[i] = o_k;
                 if (outputMap.get(anInput.getWhaleId()) == output[i])
                 {
                     outErr[i] = o_k * (1 - o_k) * (.9 - o_k);
@@ -345,13 +348,14 @@ public class WhaleImageNeuralNetwork implements Serializable
 
         public String toString()
         {
-            String str = "";
+            StringBuilder str = new StringBuilder();
             for (Perceptron key : weights.keySet())
             {
-                str += weights.get(key) + ", ";
+                str.append(weights.get(key)).append(", ");
             }
-            str = str.substring(0, str.length() - 2);
-            return str;
+            str.deleteCharAt(str.length() - 2);
+            str.append("\n");
+            return str.toString();
         }
     }
 
@@ -363,19 +367,19 @@ public class WhaleImageNeuralNetwork implements Serializable
 
     public String toString()
     {
-        String str = "Output Layer: ";
+        StringBuilder str = new StringBuilder("Output Layer: \n");
         for (Perceptron p : output)
         {
             //System.err.println("Output weights#: " + p.weights.size());
-            str += "[" + p.toString() + "], ";
+            str.append("[").append(p.toString()).append("], ");
         }
-        str = str.substring(str.length() - 2);
-        str += "Hidden Layer: ";
+        str.deleteCharAt(str.length() - 2);
+        str.append("\nHidden Layer: \n");
         for (Perceptron p : hidden.get(0))
         {
-            str += "[" + p.toString() + "], ";
+            str.append("[").append(p.toString()).append("], ");
         }
-        str = str.substring(str.length() - 2);
-        return str;
+        str.deleteCharAt(str.length() - 2);
+        return str.toString();
     }
 }
