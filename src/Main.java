@@ -1,5 +1,3 @@
-import mpi.MPIException;
-
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Scanner;
@@ -37,10 +35,8 @@ public class Main
     private static ArrayList<WhaleImage> trainData = new ArrayList<>();
     private static ArrayList<WhaleImage> testData = new ArrayList<>();
 
-    public static void main(String[] args) throws MPIException
+    public static void main(String[] args)
     {
-
-
         WhaleImageNeuralNetwork ann = null;
         File learningFile = new File(LEARNING_FILE);
 
