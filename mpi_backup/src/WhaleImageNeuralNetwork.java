@@ -1,0 +1,530 @@
+import mpi.MPI;
+import mpi.MPIException;
+import mpi.Status;
+
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Formatter;
+import java.util.HashMap;
+import java.util.Locale;
+
+/**
+ * Neural network abstraction for identifying right whales.
+ *
+ * @author Tyler Allen
+ * @version 11/15/15
+ * @created 11/15/15
+ */
+public class WhaleImageNeuralNetwork implements Serializable
+{
+    public static final int WIDTH = 32;
+    public static final int HEIGHT = 30;
+    /**
+     * Currently the resolution of photos, to change maybe.
+     */
+    public static final int INPUTS = WIDTH * HEIGHT;
+    /**
+     * Learning rate.
+     */
+    public static final double N = .01;
+
+    private Perceptron[] input;
+    private Perceptron[] output;
+    private ArrayList<Perceptron[]> hidden;
+    private HashMap<Integer, Perceptron> outputMap;
+
+    public WhaleImageNeuralNetwork (int output_size, Integer[] ids)
+    {
+        input = new Perceptron[INPUTS];
+        output = new Perceptron[output_size];
+        outputMap = new HashMap<>();
+        hidden = new ArrayList<>();
+        hidden.add(new Perceptron[(INPUTS + output.length) / 2]);
+
+        for (int i = 0; i < input.length; i++)
+        {
+            input[i] = new Perceptron();
+        }
+
+        for (int i = 0; i < output.length; i++)
+        {
+            output[i] = new Perceptron();
+            outputMap.put(ids[i], output[i]);
+        }
+        // Assuming fixed hidden length for now...
+        Perceptron[] mHidden = hidden.get(0);
+        for (int i = 0; i < mHidden.length; i++)
+        {
+            mHidden[i] = new Perceptron();
+        }
+        // connections
+        for (Perceptron anInput1 : input)
+        {
+            for (Perceptron aMHidden : mHidden)
+            {
+                connect(anInput1, aMHidden);
+            }
+        }
+        for (Perceptron aMHidden : mHidden)
+        {
+            for (Perceptron anOutput : output)
+            {
+                connect(aMHidden, anOutput);
+            }
+        }
+        /**
+        for (Perceptron anInput : input)
+        {
+            anInput.avgWeights();
+        }
+         **/
+        for (Perceptron anOutput: output)
+        {
+            anOutput.randWeights();
+        }
+        for (Perceptron anHidden: mHidden)
+        {
+            anHidden.randWeights();
+        }
+    }
+
+    public void runData(java.util.List<WhaleImage> data, FileOutputStream outFile)
+    {
+        PrintWriter outWriter = new PrintWriter(outFile);
+        StringBuilder str = new StringBuilder("Image,");
+        Formatter formatter = new Formatter(str, Locale.US);
+        for (int id : outputMap.keySet())
+        {
+            formatter.format("whale_%05d,", id);
+        }
+        str.deleteCharAt(str.length() - 1);
+        str.append("\n");
+
+        int counter = 0;
+        for (WhaleImage anInput : data)
+        {
+            System.err.println("Starting data image #" + counter++);
+            BufferedImage image;
+            int[] colorBuffer;
+            try
+            {
+                // get the BufferedImage, using the ImageIO class
+                image = ImageIO.read(anInput.getFile());
+            }
+            catch (IOException e)
+            {
+                System.err.println(e.getMessage());
+                continue;
+            }
+            colorBuffer = image.getRGB(0, 0, WIDTH, HEIGHT, null, 0, WIDTH);
+            Color color;
+            for (int i = 0; i < INPUTS; i++)
+            {
+                color = new Color(colorBuffer[i]);
+                int gray = (((color.getRed() + color.getGreen() + color.getBlue()) / 3) / 255) * 2 - 1;
+                this.input[i].receiveInput(gray);
+            }
+            for (Perceptron p : input)
+            {
+                p.activate();
+            }
+
+            for (int i = 0; i < hidden.get(0).length; i++)
+            {
+                Perceptron p = hidden.get(0)[i];
+                p.activate();
+            }
+            // Stores all output node results for backprop.
+            int max = 0;
+            double[] out = new double[output.length];
+            for (int i = 0; i < out.length; i++)
+            {
+                double o_k = output[i].activate();
+                out[i] = o_k;
+                if (o_k > out[max])
+                {
+                    max = i;
+                }
+            }
+            str.append(anInput.getFile()).append(",");
+            for (int i = 0; i < out.length; i++)
+            {
+                int val = max == i ? 1 : 0;
+                formatter.format("%d,", val);
+            }
+            str.deleteCharAt(str.length() - 1);
+            str.append("\n");
+            System.err.println("File# " + counter);
+        }
+        outWriter.println(str.toString());
+        outWriter.close();
+    }
+
+    public void runEpoch(java.util.List<WhaleImage> training) throws MPIException
+    {
+        int rank = MPI.COMM_WORLD.getRank();
+        int size = MPI.COMM_WORLD.getSize();
+
+        double[][] odws = new double[output.length][];
+        int oSize = 0;
+        for (int i = 0; i < output.length; i++)
+        {
+            oSize += output[i].weights.keySet().size();
+            odws[i] = new double[output[i].weights.keySet().size()];
+        }
+
+        double[][] hdws = new double[hidden.get(0).length][];
+        int hSize = 0;
+        for (int i = 0; i < hidden.get(0).length; i++)
+        {
+            Perceptron current = hidden.get(0)[i];
+            hSize += current.weights.keySet().size();
+            hdws[i] = new double[current.weights.keySet().size()];
+        }
+
+        if (rank == 0)
+        {
+
+            double[][] mOut = new double[output.length][];
+            for (int j = 0; j < output.length; j++)
+            {
+                odws[j] = new double[output[j].weights.keySet().size()];
+            }
+
+            double[][] mHid = new double[hidden.get(0).length][];
+            for (int j = 0; j < hidden.get(0).length; j++)
+            {
+                Perceptron current = hidden.get(0)[j];
+                hdws[j] = new double[current.weights.keySet().size()];
+            }
+
+            int counter = 0;
+            for (int i = 0; i < training.size(); )
+            {
+                Status status = MPI.COMM_WORLD.recv(null, 0, MPI.DOUBLE, MPI.ANY_SOURCE, MPI.ANY_TAG);
+                if (status.getTag() == TAGS.WORK_NEED.ordinal())
+                {
+                    MPI.COMM_WORLD.send(i, 1, MPI.INT, status.getSource(), TAGS.WORK_TODO.ordinal());
+                    i++;
+                }
+                else if (status.getTag() == TAGS.WORK_DONE.ordinal())
+                {
+                    MPI.COMM_WORLD.send(null, 0, MPI.INT, status.getSource(), TAGS.WORK_TODO.ordinal());
+                    MPI.COMM_WORLD.recv(mOut, oSize, MPI.DOUBLE, status.getSource(), TAGS.WORK_DONE.ordinal());
+                    MPI.COMM_WORLD.recv(mHid, hSize, MPI.DOUBLE, status.getSource(), TAGS.WORK_DONE.ordinal());
+
+                    for (int j = 0; j < output.length; j++)
+                    {
+                        for (int k = 0; k < output[j].weights.keySet().size(); k++)
+                        {
+                            odws[j][k] += mOut[j][k];
+                        }
+                    }
+
+                    for (int j = 0; j < hidden.get(0).length; j++)
+                    {
+                        Perceptron current = hidden.get(0)[j];
+                        for (int k = 0; k < current.weights.keySet().size(); k++)
+                        {
+                            hdws[j][k] += mHid[j][k];
+                        }
+                    }
+                }
+            }
+            while (size > 0)
+            {
+                Status status = MPI.COMM_WORLD.recv(null, 0, MPI.DATATYPE_NULL, MPI.ANY_SOURCE, TAGS.WORK_DONE.ordinal());
+                MPI.COMM_WORLD.send(null, 0, MPI.DATATYPE_NULL, status.getSource(), TAGS.WORK_DONE.ordinal());
+                MPI.COMM_WORLD.recv(mOut, oSize, MPI.DOUBLE, status.getSource(), TAGS.WORK_DONE.ordinal());
+                MPI.COMM_WORLD.recv(mHid, hSize, MPI.DOUBLE, status.getSource(), TAGS.WORK_DONE.ordinal());
+
+                for (int j = 0; j < output.length; j++)
+                {
+                    for (int k = 0; k < output[j].weights.keySet().size(); k++)
+                    {
+                        odws[j][k] += mOut[j][k];
+                    }
+                }
+
+                for (int j = 0; j < hidden.get(0).length; j++)
+                {
+                    Perceptron current = hidden.get(0)[j];
+                    for (int k = 0; k < current.weights.keySet().size(); k++)
+                    {
+                        hdws[j][k] += mHid[j][k];
+                    }
+                }
+                size--;
+            }
+
+
+            // Apply weight change.
+            for (int i = 0; i < output.length; i++)
+            {
+                int j = 0;
+                for (Perceptron p : output[i].weights.keySet())
+                {
+                    double cw = output[i].weights.get(p);
+                    output[i].weights.put(p, cw + odws[i][j]);
+                    j++;
+                }
+            }
+
+            for (int i = 0; i < hidden.get(0).length; i++)
+            {
+                int j = 0;
+                Perceptron current = hidden.get(0)[i];
+                for (Perceptron p : current.weights.keySet())
+                {
+                    double cw = current.weights.get(p);
+                    current.weights.put(p, cw + hdws[i][j]);
+                    j++;
+                }
+            }
+        }
+        else
+        {
+            boolean done = false;
+            while (!done)
+            {
+                Integer mInt = 0;
+                MPI.COMM_WORLD.send(null, 0, MPI.DATATYPE_NULL, 0, TAGS.WORK_NEED.ordinal());
+                Status status;
+                MPI.COMM_WORLD.recv(mInt, 1, MPI.INT, 0, TAGS.WORK_TODO.ordinal());
+
+                WhaleImage anInput = training.get(mInt);
+
+                BufferedImage image = null;
+                int[] colorBuffer;
+                try
+                {
+                    // get the BufferedImage, using the ImageIO class
+                    image = ImageIO.read(anInput.getFile());
+                }
+                catch (IOException e)
+                {
+                    System.err.println(e.getMessage());
+                    System.err.println("File: " + anInput.getFile());
+                    return;
+                }
+                colorBuffer = image.getRGB(0, 0, WIDTH, HEIGHT, null, 0, WIDTH);
+                Color color;
+                for (int i = 0; i < INPUTS; i++)
+                {
+                    color = new Color(colorBuffer[i]);
+                    // derive gray and normalize...
+                    int gray = (((color.getRed() + color.getGreen() + color.getBlue()) / 3) / 255) * 2 - 1;
+                    this.input[i].receiveInput(gray);
+                }
+                for (Perceptron p : input)
+                {
+                    p.activate();
+                }
+
+                double[] hidden_out = new double[hidden.get(0).length];
+                for (int i = 0; i < hidden.get(0).length; i++)
+                {
+                    Perceptron p = hidden.get(0)[i];
+                    hidden_out[i] = p.activate();
+                }
+                // Stores all output node results for backprop.
+                double[] out = new double[output.length];
+                double[] hiddenErr = new double[hidden.get(0).length];
+                double[] outErr = new double[output.length];
+                for (int i = 0; i < out.length; i++)
+                {
+                    double o_k = output[i].activate();
+                    out[i] = o_k;
+                    double val = outputMap.get(anInput.getWhaleId()) == output[i] ? .9 : .1;
+                    outErr[i] = o_k * (1 - o_k) * (val - o_k);
+                }
+
+                // backprop for hidden...
+                for (int i = 0; i < hidden.get(0).length; i++)
+                {
+                    Perceptron p = hidden.get(0)[i];
+                    double o_h = hidden_out[i];
+                    double wSum = 0;
+                    for (int j = 0; j < p.connections.size(); j++)
+                    {
+                        wSum += outErr[j] * p.connections.get(j).getWeight(p);
+                    }
+                    hiddenErr[i] += o_h * (1 - o_h) * wSum;
+                }
+
+                // Apply weight change.
+                for (int i = 0; i < output.length; i++)
+                {
+                    double temp = N * outErr[i];
+                    int j = 0;
+                    for (Perceptron p : output[i].weights.keySet())
+                    {
+                        double dw = temp * output[i].in.get(p);
+                        odws[i][j] += dw;
+                        j++;
+                    }
+                }
+
+                for (int i = 0; i < hidden.get(0).length; i++)
+                {
+                    double temp = N * hiddenErr[i];
+                    Perceptron current = hidden.get(0)[i];
+                    int j = 0;
+                    for (Perceptron p : current.weights.keySet())
+                    {
+                        double dw = temp * current.in.get(p);
+                        hdws[i][j] += dw;
+                        j++;
+                    }
+                }
+                MPI.COMM_WORLD.send(null, 0, MPI.DATATYPE_NULL, 0, TAGS.WORK_DONE.ordinal());
+                status = MPI.COMM_WORLD.recv(null, 0, MPI.DATATYPE_NULL, 0, MPI.ANY_TAG);
+                if (status.getTag() == TAGS.WORK_DONE.ordinal())
+                {
+                    done = true;
+                }
+                MPI.COMM_WORLD.send(hdws, oSize, MPI.DATATYPE_NULL, 0, TAGS.WORK_DONE.ordinal());
+                MPI.COMM_WORLD.send(odws, hSize, MPI.DATATYPE_NULL, 0, TAGS.WORK_DONE.ordinal());
+            }
+        }
+    }
+
+    public class Perceptron implements Serializable
+    {
+        protected HashMap<Perceptron, Double> weights;
+        protected HashMap<Perceptron, Double> in;
+        protected ArrayList<Perceptron> connections;
+
+        // Collect weighted input
+        protected double sum;
+
+        public Perceptron ()
+        {
+            weights = new HashMap<>();
+            in = new HashMap<>();
+            connections = new ArrayList<>();
+            sum = 0;
+        }
+
+        public double getWeight(Perceptron p)
+        {
+            return weights.get(p);
+        }
+
+        public void addConnection (Perceptron p)
+        {
+            connections.add(p);
+        }
+
+        protected void addWeight (Perceptron b)
+        {
+            weights.put(b, 0.0);
+        }
+
+        public void receiveInput(double val)
+        {
+            sum = val;
+        }
+
+        /**
+         * Receive a new input value from an input node.
+         * @param p the node sending the input.
+         * @param val the value to be received.
+         */
+        private void receive (Perceptron p, double val)
+        {
+            in.put(p, val);
+            sum += val * weights.get(p);
+        }
+
+        /**
+         * Pass value forward to all nodes.
+         * @param val the value to pass forward
+         */
+        public void feedforward(double val)
+        {
+            for (Perceptron p : connections)
+            {
+                p.receive(this, val);
+            }
+        }
+
+        public double activate()
+        {
+            // Currently implemented as sigmoid function
+            double val = 1 / (1 + Math.exp(-sum));
+            feedforward(val);
+
+            sum = 0;
+            //assert (val < 1 && val > -1) : ("Val: " + val);
+            return val;
+        }
+
+        protected void avgWeights ()
+        {
+            double avg = 1.0 / weights.size();
+            for (Perceptron p : weights.keySet())
+            {
+                weights.put(p, avg);
+            }
+        }
+
+        protected void randWeights ()
+        {
+            for (Perceptron p : weights.keySet())
+            {
+                // Random weights between -.05 and .05
+                weights.put(p, (Math.random() * .10) - .05);
+            }
+        }
+
+        public String toString()
+        {
+            StringBuilder str = new StringBuilder();
+            for (Perceptron key : weights.keySet())
+            {
+                str.append(weights.get(key)).append(", ");
+            }
+            str.deleteCharAt(str.length() - 2);
+            str.append("\n");
+            return str.toString();
+        }
+    }
+
+    private static void connect(Perceptron a, Perceptron b)
+    {
+        b.addWeight(a);
+        a.addConnection(b);
+    }
+
+    public String toString()
+    {
+        StringBuilder str = new StringBuilder("Output Layer: \n");
+        for (Perceptron p : output)
+        {
+            //System.err.println("Output weights#: " + p.weights.size());
+            str.append("[").append(p.toString()).append("], ");
+        }
+        str.deleteCharAt(str.length() - 2);
+        str.append("\nHidden Layer: \n");
+        for (Perceptron p : hidden.get(0))
+        {
+            str.append("[").append(p.toString()).append("], ");
+        }
+        str.deleteCharAt(str.length() - 2);
+        return str.toString();
+    }
+
+    enum TAGS
+    {
+        WORK_NEED,
+        WORK_DONE,
+        WORK_TODO;
+    }
+}
