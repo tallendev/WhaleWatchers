@@ -59,7 +59,7 @@ public class WhaleImage
 
     protected void setWhaleId(int whaleId)
     {
-        whaleId = whaleId;
+        this.whaleId = whaleId;
     }
 
     /**

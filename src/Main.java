@@ -14,7 +14,7 @@ import java.util.TreeSet;
 
 public class Main
 {
-    public static final int TRAINING_ITERATIONS = 500;
+    public static final int TRAINING_ITERATIONS = 100;
 
     /** File not found exception. */
     public static final int FNF = 100;
