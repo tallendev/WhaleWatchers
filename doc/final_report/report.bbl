@@ -1,0 +1,112 @@
+% \bib, bibdiv, biblist are defined by the amsrefs package.
+\begin{bibdiv}
+\begin{biblist}
+
+\bib{cod}{misc}{
+       title={Cascade object detector},
+  note={\url{http://www.mathworks.com/help/vision/ref/traincascadeobjectdetector.html},
+  Accessed: 2015-10-04},
+}
+
+\bib{kaggle_face}{misc}{
+       title={Creating a "face detector" for whales},
+  note={\url{http://www.kaggle.com/c/noaa-right-whale-recognition/details/creating-a-face-detector-for-whales},
+  Accessed: 2015-09-15},
+}
+
+\bib{dbn}{misc}{
+       title={Deep-belief networks},
+        note={\url{http://deeplearning4j.org/deepbeliefnetwork.html}, Accessed:
+  11/7/2015},
+}
+
+\bib{dl4j}{misc}{
+       title={Dl4j},
+        note={\url{http://deeplearning4j.org/}, Accessed: 11/7/2015},
+}
+
+\bib{haar}{misc}{
+       title={Face detection using haar cascades},
+  note={\url{http://docs.opencv.org/master/d7/d8b/tutorial_py_face_detection.html\#gsc.tab=0},
+  Accessed: 2015-10-04},
+}
+
+\bib{kforums}{misc}{
+       title={Face detection using haar cascades},
+  note={\url{https://www.kaggle.com/c/noaa-right-whale-recognition/forums/t/17016/matlab-roi-and-opencv-classifier},
+  Accessed: 2015-10-04},
+}
+
+\bib{face}{misc}{
+       title={Facial reconstruction},
+  note={\url{http://deeplearning4j.org/facial-reconstruction-tutorial.html},
+  Accessed: 12/5/2015},
+}
+
+\bib{kaggle_desc}{misc}{
+       title={Identify endangered right whales in aerial photographs},
+        note={\url{http://www.kaggle.com/c/noaa-right-whale-recognition},
+  Accessed: 2015-09-15},
+}
+
+\bib{math_training}{misc}{
+       title={Labeling images for classification model training},
+  note={\url{http://www.mathworks.com/help/vision/ug/label-images-for-classification-model-training.html},
+  Accessed: 2015-09-15},
+}
+
+\bib{NEA}{misc}{
+       title={New england aquarium},
+        note={\url{www.neaq.org/index.php}, Accessed: 2015-09-15},
+}
+
+\bib{NOAA}{misc}{
+       title={Noaa fisheres},
+        note={\url{www.nmfs.noaa.gov}, Accessed: 2015-09-15},
+}
+
+\bib{kaggle_eval}{misc}{
+       title={Object recognition for fun and profit},
+  note={\url{https://www.kaggle.com/c/noaa-right-whale-recognition/details/evaluation}},
+}
+
+\bib{autoencode}{misc}{
+       title={Object recognition for fun and profit},
+  note={\url{https://github.com/anlthms/whale-2015/blob/master/object-recognition.pdf}},
+}
+
+\bib{kaggle_data}{misc}{
+       title={Right whale recognition data},
+        note={\url{http://www.kaggle.com/c/noaa-right-whale-recognition/data},
+  Accessed: 2015-09-15},
+}
+
+\bib{scaleout}{misc}{
+       title={Scaleout},
+        note={\url{http://deeplearning4j.org/scaleout.html}, Accessed:
+  12/5/2015},
+}
+
+\bib{math_cascade}{misc}{
+       title={Train a cascade object detector},
+  note={\url{www.mathworks.com/help/vision/ug/train-a-cascade-object-detector.html},
+  Accessed: 2015-09-15},
+}
+
+\bib{suggestion}{misc}{
+       title={The welldressed recommendation engine},
+  note={\url{http://deeplearning4j.org/welldressed-recommendation-engine.html}},
+}
+
+\bib{mitchell}{book}{
+      author={Mitchell, Thomas~M.},
+       title={Machine learning},
+     edition={1},
+   publisher={McGraw-Hill, Inc.},
+     address={New York, NY, USA},
+        date={1997},
+        ISBN={0070428077, 9780070428072},
+}
+
+\end{biblist}
+\end{bibdiv}

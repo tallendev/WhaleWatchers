@@ -1,0 +1,84 @@
+This is BibTeX, Version 0.99d (TeX Live 2015/Arch Linux)
+Capacity: max_strings=35307, hash_size=35307, hash_prime=30011
+The top-level auxiliary file: report.aux
+The style file: amsrn.bst
+Reallocated singl_function (elt_size=8) to 100 items from 50.
+Reallocated singl_function (elt_size=8) to 100 items from 50.
+Reallocated singl_function (elt_size=8) to 100 items from 50.
+Database file #1: report.bib
+Warning--to sort, need author or key in kaggle_desc
+Warning--to sort, need author or key in kaggle_data
+Warning--to sort, need author or key in kaggle_face
+Warning--to sort, need author or key in math_cascade
+Warning--to sort, need author or key in cod
+Warning--to sort, need author or key in dl4j
+Warning--to sort, need author or key in dbn
+Warning--to sort, need author or key in kaggle_eval
+Warning--to sort, need author or key in suggestion
+Warning--to sort, need author or key in haar
+Warning--to sort, need author or key in kforums
+Warning--to sort, need author or key in scaleout
+Warning--to sort, need author or key in face
+Warning--to sort, need author or key in autoencode
+Warning--to sort, need author or key in math_training
+Warning--to sort, need author or key in NOAA
+Warning--to sort, need author or key in NEA
+Warning--missing date in cod
+Warning--missing date in kaggle_face
+Warning--missing date in dbn
+Warning--missing date in dl4j
+Warning--missing date in haar
+Warning--missing date in kforums
+Warning--missing date in face
+Warning--missing date in kaggle_desc
+Warning--missing date in math_training
+Warning--missing date in NEA
+Warning--missing date in NOAA
+Warning--missing date in kaggle_eval
+Warning--missing date in autoencode
+Warning--missing date in kaggle_data
+Warning--missing date in scaleout
+Warning--missing date in math_cascade
+Warning--missing date in suggestion
+You've used 18 entries,
+            1497 wiz_defined-function locations,
+            460 strings with 4605 characters,
+and the built_in function-call counts, 8105 in all, are:
+= -- 222
+> -- 344
+< -- 2
++ -- 5
+- -- 342
+* -- 585
+:= -- 838
+add.period$ -- 0
+call.type$ -- 18
+change.case$ -- 55
+chr.to.int$ -- 3
+cite$ -- 52
+duplicate$ -- 924
+empty$ -- 523
+format.name$ -- 2
+if$ -- 1217
+int.to.chr$ -- 0
+int.to.str$ -- 0
+missing$ -- 468
+newline$ -- 101
+num.names$ -- 2
+pop$ -- 1141
+preamble$ -- 1
+purify$ -- 37
+quote$ -- 0
+skip$ -- 117
+stack$ -- 0
+substring$ -- 95
+swap$ -- 549
+text.length$ -- 41
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 178
+warning$ -- 34
+while$ -- 45
+width$ -- 0
+write$ -- 164
+(There were 34 warnings)
